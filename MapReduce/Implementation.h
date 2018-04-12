@@ -59,6 +59,7 @@ vector<pair<int,size_t>> parMapReduce(const std::vector<int>& arr)
 	vector<pair<int, size_t>> pairs(size);
 	std::thread * t = new thread[THREADS_NUMBER];
 	//parallel mapping
+	cout << "\nParallel mapping, number of mappers: " << THREADS_NUMBER << "\n\n";
 	for (int i = 0; i < THREADS_NUMBER; i++)
 	{
 		t[i] = std::thread(partial_map,std::ref(arr),(size*i)/THREADS_NUMBER , (size*(i+1))/ THREADS_NUMBER, std::ref(pairs));
@@ -73,8 +74,13 @@ vector<pair<int,size_t>> parMapReduce(const std::vector<int>& arr)
 	{
 		reduce_data[element_hash(iter->first)].push_back(*iter);
 	}
-
+	cout << "Number of elements on each reducer:"  << '\n';
 	//parallel reducing
+	for (int i = 0; i < THREADS_NUMBER; i++)
+	{
+		cout << "Reducer num:" << i + 1 << ", count of elements: " << reduce_data[i].size() << ";\n";
+	}
+	cout << "\nParallel reducing, number of reducers: " << THREADS_NUMBER << "\n\n";
 	for (int i = 0; i < THREADS_NUMBER; i++)
 	{
 		t[i] = std::thread(parReduce, std::ref(reduce_data[i]));
@@ -82,6 +88,14 @@ vector<pair<int,size_t>> parMapReduce(const std::vector<int>& arr)
 	for (int i = 0; i < THREADS_NUMBER; ++i) {
 		t[i].join();
 	}
+	cout << "Result of reduce on each reducer:" << '\n';
+	//parallel reducing
+	for (int i = 0; i < THREADS_NUMBER; i++)
+	{
+		cout << "\nReducer num:" << i + 1 << "\n";
+		print_result(reduce_data[i]);
+	}
+
 	//merging the vectors from all reducers
 	vector<pair<int, size_t>> result_vector;
 	for (int i = 0; i < THREADS_NUMBER; ++i)
